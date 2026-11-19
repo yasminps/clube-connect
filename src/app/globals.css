@@ -245,3 +245,4 @@ input[type=checkbox] { accent-color: var(--brand); width: 17px; height: 17px; fl
 .leadership-units { border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; max-height: 200px; overflow-y: auto; }
 .leadership-units legend { padding: 0 4px; font-weight: 650; }
 .leadership-unit-list { list-style: none; padding: 0; margin: 0; }
+.club-logo { flex: none; object-fit: contain; border-radius: 10px; }

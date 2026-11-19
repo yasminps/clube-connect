@@ -1,10 +1,11 @@
 "use client";
 import Link from "next/link";
+import { ClubLogo } from "@/components/club-logo";
 import { roleHome, roleLabel } from "@/lib/auth/access";
 import type { ClubRole } from "@/types/database";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
-import { LayoutDashboard, UsersRound, Shield, ClipboardCheck, Trophy, Target, CalendarDays, Megaphone, Settings, Zap, PanelLeft, Bell, LogOut, FileText, ContactRound } from "lucide-react";
+import { LayoutDashboard, UsersRound, Shield, ClipboardCheck, Trophy, Target, CalendarDays, Megaphone, Settings, PanelLeft, Bell, LogOut, FileText, ContactRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const links = [
@@ -30,7 +31,7 @@ export function AdminShell({ children, profile, clubName }: { children: ReactNod
   return <div className="shell">
     {open && <button className="overlay" aria-label="Fechar menu" onClick={() => setOpen(false)} />}
     <aside className={open ? "sidebar sidebar-open" : "sidebar"} id="navigation">
-      <Link href={home} className="brand" onClick={() => setOpen(false)}><span className="brand-icon"><Zap size={21} fill="currentColor" /></span><span>Clube Connect<small>{clubName}</small></span></Link>
+      <Link href={home} className="brand" onClick={() => setOpen(false)}><ClubLogo /><span>Clube Connect<small>{clubName}</small></span></Link>
       <nav aria-label="Menu principal"><p className="nav-label">ESPAÇO DO CLUBE</p>{links.map(({ href, label, icon: Icon }) =>
         <Link key={href} href={href === "/" ? home : href} onClick={() => setOpen(false)} aria-current={current.href === href ? "page" : undefined}><Icon size={18} />{label}</Link>
       )}</nav>
