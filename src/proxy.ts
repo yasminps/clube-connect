@@ -5,5 +5,4 @@ export function proxy(request: NextRequest) {
   return refreshSupabaseSession(request);
 }
 
-// Reservado para a aplicação autenticada. O painel demonstrativo permanece separado.
-export const config = { matcher: ["/api/club/:path*", "/conta/:path*"] };
+export const config = { matcher: ["/((?!_next/|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"] };

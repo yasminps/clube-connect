@@ -1,0 +1,1 @@
+export { DirectoryLoading as default } from "@/components/directory-loading";

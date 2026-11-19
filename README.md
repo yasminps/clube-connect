@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-Abra http://localhost:3000. Use `npm run typecheck` para verificar os tipos e `npm run build` para compilar a versão de produção.
+Abra http://localhost:3000. O painel exige uma conta autenticada. Siga o guia do backend para configurar o acesso e a recuperação de senha. Use `npm run typecheck` para verificar os tipos e `npm run build` para compilar a versão de produção.
 
 ## Estrutura
 

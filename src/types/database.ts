@@ -14,15 +14,26 @@ export type Database = {
     Enums: Enums;
     CompositeTypes: Record<never, never>;
     Functions: {
+      prepare_counselor_invite: { Args: { actor: string; email_address: string; counselor_name: string; targets: string[] }; Returns: string };
+      manage_counselor: { Args: { target: string; targets: string[] | null; enabled: boolean | null }; Returns: undefined };
       save_attendance: {
         Args: { event: string; entries: { member_id: string; status: Enums["attendance_status"]; justification: string | null }[] };
         Returns: Database["public"]["Tables"]["attendance"]["Row"][];
       };
     };
     Views: {
+      leadership_directory: { Row: { id: string; display_name: string; email: string | null; active: boolean; confirmed: boolean }; Relationships: [] };
+      club_identity: { Row: { name: string }; Relationships: [] };
+      counselor_directory: { Row: { id: string; display_name: string }; Relationships: [] };
+      unit_directory: { Row: { id: string; code: string; name: string; description: string; color: string; active: boolean; member_count: number; active_member_count: number; points: number; symbol_image: string | null }; Relationships: [] };
       unit_ranking: { Row: { unit_id: string; name: string; color: string; points: number; position: number }; Relationships: [] };
     };
     Tables: {
+      directory_audit: Table<
+        { id: string; entity: string; record_id: string; related_user_id: string | null; operation: string; actor_id: string | null; changed_fields: string[]; created_at: string },
+        { id?: string; entity: string; record_id: string; related_user_id?: string | null; operation: string; actor_id?: string | null; changed_fields: string[]; created_at?: string },
+        []
+      >;
       club_settings: Table<
         { id: number; name: string; description: string; timezone: string; created_at: string; updated_at: string },
         { id?: number; name: string; description?: string; timezone?: string; created_at?: string; updated_at?: string },
@@ -34,13 +45,13 @@ export type Database = {
         []
       >;
       user_roles: Table<
-        { user_id: string; role: Enums["club_role"]; created_at: string; updated_at: string },
-        { user_id: string; role: Enums["club_role"]; created_at?: string; updated_at?: string },
+        { user_id: string; role: Enums["club_role"]; active: boolean; created_at: string; updated_at: string },
+        { user_id: string; role: Enums["club_role"]; active?: boolean; created_at?: string; updated_at?: string },
         [{ foreignKeyName: "user_roles_user_id_fkey"; columns: ["user_id"]; isOneToOne: true; referencedRelation: "profiles"; referencedColumns: ["id"] }]
       >;
       units: Table<
-        { id: string; code: string; name: string; color: string; active: boolean; created_at: string; updated_at: string },
-        { id?: string; code: string; name: string; color?: string; active?: boolean; created_at?: string; updated_at?: string },
+        { id: string; code: string; name: string; description: string; color: string; active: boolean; symbol_image: string | null; created_at: string; updated_at: string },
+        { id?: string; code: string; name: string; description?: string; color?: string; active?: boolean; symbol_image?: string | null; created_at?: string; updated_at?: string },
         []
       >;
       members: Table<
