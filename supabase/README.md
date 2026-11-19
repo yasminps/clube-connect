@@ -67,18 +67,13 @@ Em projetos que já receberam as duas primeiras migrations, execute apenas o arq
 - Cadastros novos, transferências e reativações de membros exigem unidade ativa. A desativação preserva os vínculos e o histórico. O relatório inclui unidades inativas e usa apenas pontos coletivos.
 - As operações em unidades, membros, conselheiros e configuração do clube registram o autor, o identificador, o horário e os campos afetados em public.directory_audit. O registro de auditoria evita copiar nomes ou outros valores pessoais do cadastro. ADMIN e DIRECTOR podem consultar a auditoria.
 - Configurações grava o nome do clube em public.club_settings. O login consulta public.club_identity, que publica apenas o nome de exibição. Clube Connect permanece como nome da plataforma.
-## Equipe de liderança
+## Cadastro direto de conselheiros
 
-1. Aplique as migrations pendentes em ordem. Se a migration de símbolos 00400 já foi aplicada, rode apenas 20261119000500_leadership.sql no SQL Editor.
-2. No Supabase, em **Settings → API Keys**, obtenha uma chave **Secret** (sb_secret_…). Salve em SUPABASE_SECRET_KEY no .env.local ou no ambiente privado do deploy. Use CLUB_APP_URL com a origem do app. Reinicie o servidor. A chave secreta fica exclusivamente no servidor, sem prefixo NEXT_PUBLIC_ e fora do Git.
-3. Em **Authentication → URL Configuration**, adicione /aceitar-convite com a URL completa do app à lista de **Redirect URLs**, como http://localhost:3000/aceitar-convite.
-4. Em **Authentication → Email Templates → Invite user**, use o link abaixo no modelo de convite. Configure SMTP próprio para entregar convites a endereços externos e mantenha o cadastro público desabilitado.
-5. Entre como ADMIN ou DIRECTOR e abra **Equipe de liderança**. Selecione pelo menos uma unidade ativa ao convidar. A pessoa define a própria senha pelo link recebido. Convites pendentes podem ser reenviados. Se a pessoa confirmou o e-mail e ainda precisa definir uma senha, use o fluxo de recuperação.
+1. Aplique as migrations pendentes em ordem. Se 00500 já estiver aplicada, execute apenas 20261119000600_counselor_password_setup.sql.
+2. No ambiente do servidor, configure SUPABASE_SERVICE_ROLE_KEY com a chave service_role do Supabase, ou mantenha SUPABASE_SECRET_KEY com a chave moderna sb_secret_… já configurada. Havendo as duas, o servidor usa SUPABASE_SERVICE_ROLE_KEY. Essas chaves ficam no .env.local e no ambiente privado da Vercel, sem prefixo NEXT_PUBLIC_. Faça um novo deploy após alterar uma variável.
+3. Em **Equipe de liderança → Cadastrar conselheiro**, informe nome, e-mail, unidades e uma senha temporária exclusiva daquela pessoa. Entregue as credenciais iniciais por um canal privado. O cadastro direto não depende de SMTP.
+4. No primeiro login, o conselheiro é redirecionado a /alterar-senha. O servidor e as políticas RLS bloqueiam os dados do clube até que o Supabase Auth registre a troca. Depois, o conselheiro entra novamente com a nova senha.
 
-```html
-<a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}">Aceitar convite</a>
-```
+Perfil, papel COUNSELOR e vínculos são gravados na transação que cria a conta no Supabase Auth. Se qualquer etapa falhar, a transação é revertida. A senha temporária é enviada somente ao Supabase Auth. O módulo não registra a senha em dados do clube, auditoria ou mensagens de sucesso. O acesso convencional, o logout e a recuperação de senha continuam disponíveis. Contas antigas criadas por convite mantêm seus papéis e vínculos. Quem ainda não definiu senha pode usar a recuperação de senha configurada no projeto.
 
-A criação de conta Auth, perfil, papel COUNSELOR e vínculos iniciais ocorre na mesma transação de provisionamento. O registro temporário de convite é privado, vinculado ao e-mail e válido para uso único. Contas já cadastradas não recebem um novo papel pelo convite. Desativar acesso bloqueia o conselheiro na aplicação e nas políticas RLS sem remover os vínculos nem o histórico. Mudanças de acesso e vínculos ficam registradas em directory_audit.
-
-Documentação oficial de [convites por e-mail](https://supabase.com/docs/reference/javascript/auth-admin-inviteuserbyemail), [chaves de API](https://supabase.com/docs/guides/getting-started/api-keys) e [SMTP personalizado](https://supabase.com/docs/guides/auth/auth-smtp).
+Para testar em homologação, cadastre um conselheiro com ADMIN e outro com DIRECTOR. Confirme que o primeiro login exige a troca e que abrir diretamente a área do conselheiro com a senha temporária redireciona para a mesma tela. Depois da troca, verifique o acesso às unidades vinculadas, o bloqueio de URLs de outra unidade e a impossibilidade de cadastrar conselheiros usando um perfil COUNSELOR ou MEMBER.

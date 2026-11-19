@@ -4,9 +4,9 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import type { Database } from "@/types/database";
 
-export function createInviteClient() {
-  const secret = process.env.SUPABASE_SECRET_KEY;
-  if (!secret?.startsWith("sb_secret_")) throw new Error("Configure SUPABASE_SECRET_KEY.");
+export function createLeadershipAdminClient() {
+  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+  if (!secret || secret.startsWith("sb_publishable_")) throw new Error("Configure a chave administrativa do Supabase.");
   return createClient<Database>(getSupabaseConfig().url, secret, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });

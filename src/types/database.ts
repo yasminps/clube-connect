@@ -14,7 +14,9 @@ export type Database = {
     Enums: Enums;
     CompositeTypes: Record<never, never>;
     Functions: {
-      prepare_counselor_invite: { Args: { actor: string; email_address: string; counselor_name: string; targets: string[] }; Returns: string };
+      password_change_required: { Args: Record<never, never>; Returns: boolean };
+      rename_counselor: { Args: { target: string; counselor_name: string }; Returns: undefined };
+      prepare_counselor_account: { Args: { actor: string; email_address: string; counselor_name: string; targets: string[] }; Returns: string };
       manage_counselor: { Args: { target: string; targets: string[] | null; enabled: boolean | null }; Returns: undefined };
       save_attendance: {
         Args: { event: string; entries: { member_id: string; status: Enums["attendance_status"]; justification: string | null }[] };
@@ -22,7 +24,7 @@ export type Database = {
       };
     };
     Views: {
-      leadership_directory: { Row: { id: string; display_name: string; email: string | null; active: boolean; confirmed: boolean }; Relationships: [] };
+      leadership_directory: { Row: { id: string; display_name: string; email: string | null; active: boolean; confirmed: boolean; must_change_password: boolean }; Relationships: [] };
       club_identity: { Row: { name: string }; Relationships: [] };
       counselor_directory: { Row: { id: string; display_name: string }; Relationships: [] };
       unit_directory: { Row: { id: string; code: string; name: string; description: string; color: string; active: boolean; member_count: number; active_member_count: number; points: number; symbol_image: string | null }; Relationships: [] };
@@ -40,8 +42,8 @@ export type Database = {
         []
       >;
       profiles: Table<
-        { id: string; display_name: string; created_at: string; updated_at: string },
-        { id: string; display_name: string; created_at?: string; updated_at?: string },
+        { id: string; display_name: string; must_change_password: boolean; created_at: string; updated_at: string },
+        { id: string; display_name: string; must_change_password?: boolean; created_at?: string; updated_at?: string },
         []
       >;
       user_roles: Table<

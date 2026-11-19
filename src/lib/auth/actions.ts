@@ -36,7 +36,10 @@ export async function login(_: AuthState, form: FormData): Promise<AuthState> {
     await client.auth.signOut({ scope: "local" });
     return { error: genericError };
   }
-  redirect(role.data ? roleHome[role.data.role] : "/sem-acesso");
+  if (role.data) redirect(roleHome[role.data.role]);
+  const pending = await client.rpc("password_change_required");
+  if (pending.error) return { error: genericError };
+  redirect(pending.data ? "/alterar-senha" : "/sem-acesso");
 }
 
 export async function requestPasswordReset(_: AuthState, form: FormData): Promise<AuthState> {
@@ -53,7 +56,7 @@ export async function requestPasswordReset(_: AuthState, form: FormData): Promis
   return { success: "Se houver uma conta para esse e-mail, você receberá um link. Confira também a caixa de spam." };
 }
 
-async function completePassword(form: FormData, flow: "recovery" | "invite"): Promise<AuthState> {
+export async function resetPassword(_: AuthState, form: FormData): Promise<AuthState> {
   if (!isSupabaseConfigured()) return { error: setupError };
   const tokenHash = read(form, "token_hash");
   const password = read(form, "password");
@@ -66,17 +69,9 @@ async function completePassword(form: FormData, flow: "recovery" | "invite"): Pr
   const temporary = createClient<Database>(url, key, {
     auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
   });
-  const verified = await temporary.auth.verifyOtp({ token_hash: tokenHash, type: flow });
+  const verified = await temporary.auth.verifyOtp({ token_hash: tokenHash, type: "recovery" });
   if (verified.error || !verified.data.user || !verified.data.session) {
     return { error: "O link é inválido, expirou ou já foi usado. Solicite um novo link." };
-  }
-
-  if (flow === "invite") {
-    const { data: access, error } = await temporary.from("user_roles").select("role").eq("user_id", verified.data.user.id).maybeSingle();
-    if (error || access?.role !== "COUNSELOR") {
-      await temporary.auth.signOut({ scope: "local" });
-      return { error: "O acesso de conselheiro está indisponível. Fale com a administração." };
-    }
   }
 
   const result = await temporary.auth.updateUser({ password });
@@ -85,20 +80,11 @@ async function completePassword(form: FormData, flow: "recovery" | "invite"): Pr
     return { error: "A senha não foi alterada. Solicite um novo link e escolha uma senha diferente e mais forte." };
   }
 
-  await temporary.auth.signOut({ scope: flow === "invite" ? "local" : "global" });
-  if (flow === "invite") redirect("/login?senha=convite");
+  await temporary.auth.signOut({ scope: "global" });
   const client = await createServerSupabase({ writable: true });
   const current = await client.auth.getClaims();
   if (current.data?.claims.sub === verified.data.user.id) await client.auth.signOut({ scope: "local" });
   redirect("/login?senha=alterada");
-}
-
-export async function resetPassword(_: AuthState, form: FormData) {
-  return completePassword(form, "recovery");
-}
-
-export async function acceptCounselorInvite(_: AuthState, form: FormData) {
-  return completePassword(form, "invite");
 }
 
 export async function logout() {

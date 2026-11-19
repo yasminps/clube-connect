@@ -2,7 +2,7 @@ import { Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Empty, PageTitle } from "@/components/shared";
 import { DirectoryDialog, DirectoryForm } from "@/components/directory-form";
-import { inviteCounselor, resendCounselorInvite, updateCounselor } from "@/lib/directory/leadership-actions";
+import { registerCounselor, renameCounselor, updateCounselor } from "@/lib/directory/leadership-actions";
 import type { getLeadership } from "@/lib/services/leadership";
 
 type Data = Awaited<ReturnType<typeof getLeadership>>;
@@ -18,18 +18,26 @@ function UnitChoices({ units, selected = [] }: { units: Data["units"]; selected?
   </fieldset>;
 }
 
-function InviteDialog({ units }: { units: Data["units"] }) {
-  return <DirectoryDialog primary title="Convidar conselheiro" trigger={<><Plus size={17} />Convidar conselheiro</>}>
-    {units.length ? <DirectoryForm action={inviteCounselor} submit="Enviar convite">
+function RegisterDialog({ units }: { units: Data["units"] }) {
+  return <DirectoryDialog primary title="Cadastrar conselheiro" trigger={<><Plus size={17} />Cadastrar conselheiro</>}>
+    {units.length ? <DirectoryForm action={registerCounselor} submit="Criar conta" clearPasswordOnSuccess>
       <label>Nome<input name="name" required maxLength={100} /></label>
       <label>E-mail<input type="email" name="email" required maxLength={254} /></label>
+      <label>Senha temporária<input type="password" name="password" required minLength={12} maxLength={72} autoComplete="new-password" /></label>
+      <p className="muted">A pessoa deverá trocar essa senha no primeiro acesso.</p>
       <UnitChoices units={units} />
-    </DirectoryForm> : <Empty>Cadastre ou ative uma unidade para enviar o convite.</Empty>}
+    </DirectoryForm> : <Empty>Cadastre ou ative uma unidade para cadastrar um conselheiro.</Empty>}
   </DirectoryDialog>;
 }
 
 function CounselorActions({ counselor, units, selected }: { counselor: Counselor; units: Data["units"]; selected: string[] }) {
   return <div className="directory-actions">
+    <DirectoryDialog title="Editar conselheiro" trigger="Editar nome">
+      <DirectoryForm action={renameCounselor} submit="Salvar nome">
+        <input type="hidden" name="id" value={counselor.id} />
+        <label>Nome<input name="name" required maxLength={100} defaultValue={counselor.display_name} /></label>
+      </DirectoryForm>
+    </DirectoryDialog>
     <DirectoryDialog title={"Unidades de " + counselor.display_name} trigger="Alterar vínculos">
       <DirectoryForm action={updateCounselor} submit="Salvar vínculos">
         <input type="hidden" name="id" value={counselor.id} /><input type="hidden" name="operation" value="links" />
@@ -43,25 +51,19 @@ function CounselorActions({ counselor, units, selected }: { counselor: Counselor
         <input type="hidden" name="operation" value={counselor.active ? "deactivate" : "activate"} />
       </DirectoryForm>
     </DirectoryDialog>
-    {counselor.active && !counselor.confirmed && counselor.email && <DirectoryDialog title="Reenviar convite" trigger="Reenviar">
-      <DirectoryForm action={resendCounselorInvite} submit="Reenviar convite">
-        <p>Será enviado um novo link para {counselor.email}.</p>
-        <input type="hidden" name="id" value={counselor.id} />
-      </DirectoryForm>
-    </DirectoryDialog>}
   </div>;
 }
 
 export function LeadershipDirectory({ data: { counselors, units, links } }: { data: Data }) {
   return <>
-    <PageTitle title="Equipe de liderança" description="Convide conselheiros e gerencie o acesso às unidades." action={<InviteDialog units={units.filter(unit => unit.active)} />} />
+    <PageTitle title="Equipe de liderança" description="Cadastre conselheiros e gerencie o acesso às unidades." action={<RegisterDialog units={units.filter(unit => unit.active)} />} />
     <Card className="directory-card">
       {counselors.length ? <div className="table-scroll"><table>
         <thead><tr><th scope="col">Conselheiro</th><th scope="col">Unidades</th><th scope="col">Situação</th><th scope="col">Ações</th></tr></thead>
         <tbody>{counselors.map(counselor => {
           const selected = links.filter(link => link.user_id === counselor.id).map(link => link.unit_id);
           const unitNames = units.filter(unit => selected.includes(unit.id)).map(unit => unit.name);
-          const status = !counselor.active ? "Desativado" : counselor.confirmed ? "Ativo" : "Convite pendente";
+          const status = !counselor.active ? "Desativado" : counselor.must_change_password ? "Troca de senha pendente" : "Ativo";
           return <tr key={counselor.id}>
             <td><strong>{counselor.display_name}</strong>{counselor.email && <div className="muted">{counselor.email}</div>}</td>
             <td>{unitNames.length ? <ul className="leadership-unit-list">{unitNames.map((name, index) => <li key={index}>{name}</li>)}</ul> : "Sem unidades"}</td>

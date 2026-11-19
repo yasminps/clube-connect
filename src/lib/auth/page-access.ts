@@ -13,6 +13,7 @@ const getAccess = cache(async () => {
     return await requireClubAccess();
   } catch (error) {
     if (error instanceof ClubAccessError) {
+      if (error.status === 428) redirect("/alterar-senha");
       redirect(error.status === 401 ? "/login" : "/sem-acesso");
     }
     throw error;

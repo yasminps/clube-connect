@@ -3,11 +3,12 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { acceptCounselorInvite, login, requestPasswordReset, resetPassword } from "@/lib/auth/actions";
+import { login, requestPasswordReset, resetPassword } from "@/lib/auth/actions";
+import { changeInitialPassword } from "@/lib/auth/initial-password";
 import { passwordMinimum, type AuthState } from "@/lib/auth/state";
 
 const variants = {
-  invite: { action: acceptCounselorInvite, label: "Criar senha", pending: "Ativando…" },
+  initialPassword: { action: changeInitialPassword, label: "Alterar senha", pending: "Salvando…" },
   login: { action: login, label: "Entrar", pending: "Entrando…" },
   recover: { action: requestPasswordReset, label: "Enviar link", pending: "Enviando…" },
   reset: { action: resetPassword, label: "Salvar nova senha", pending: "Salvando…" },
@@ -15,7 +16,7 @@ const variants = {
 const initial: AuthState = {};
 
 export function AuthForm({ mode, token }: { mode: keyof typeof variants; token?: string }) {
-  const passwordForm = mode === "reset" || mode === "invite";
+  const passwordForm = mode === "reset" || mode === "initialPassword";
   const { action, label, pending } = variants[mode];
   const [state, submit, busy] = useActionState(action, initial);
   return <form action={submit} className="form auth-form" aria-busy={busy}>
@@ -33,7 +34,7 @@ export function AuthForm({ mode, token }: { mode: keyof typeof variants; token?:
       <Link href="/recuperar-senha" className="auth-link">Esqueci minha senha</Link>
     </>}
     {passwordForm && <>
-      <input type="hidden" name="token_hash" value={token} />
+      {mode === "reset" && <input type="hidden" name="token_hash" value={token} />}
       <label htmlFor="new-password">Nova senha
         <input id="new-password" name="password" required type="password" minLength={passwordMinimum} maxLength={72} autoComplete="new-password" aria-describedby="password-help" />
       </label>

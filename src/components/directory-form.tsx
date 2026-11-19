@@ -7,9 +7,15 @@ import type { DirectoryState } from "@/lib/directory/validation";
 
 type Action = (state: DirectoryState, form: FormData) => Promise<DirectoryState>;
 
-export function DirectoryForm({ action, children, submit = "Salvar" }: { action: Action; children: ReactNode; submit?: string }) {
+export function DirectoryForm({ action, children, submit = "Salvar", clearPasswordOnSuccess = false }: { action: Action; children: ReactNode; submit?: string; clearPasswordOnSuccess?: boolean }) {
   const [state, dispatch, pending] = useActionState(action, {});
-  return <form action={dispatch} className="form" aria-busy={pending} onSubmit={event => {
+  const form = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    if (clearPasswordOnSuccess && state.success) {
+      form.current?.querySelectorAll<HTMLInputElement>('input[type="password"]').forEach(input => { input.value = ""; });
+    }
+  }, [clearPasswordOnSuccess, state]);
+  return <form ref={form} action={dispatch} className="form" aria-busy={pending} onSubmit={event => {
     event.preventDefault();
     const values = new FormData(event.currentTarget);
     startTransition(() => dispatch(values));
